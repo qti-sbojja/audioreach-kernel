@@ -31,16 +31,10 @@ struct q6prm {
 #define PARAM_ID_RSC_HW_CORE		0x08001032
 #define PARAM_ID_RSC_LPASS_CORE		0x0800102B
 #define PARAM_ID_RSC_AUDIO_HW_CLK	0x0800102C
-#define PARAM_ID_RSC_CPU_LPR		0x08001A6E
-
-#define LPR_CPU_SS_SLEEP_DISABLE	0x1
 
 struct prm_cmd_request_hw_core {
 	struct apm_module_param_data param_data;
-	union {
-		uint32_t hw_clk_id;
-		uint32_t lpr_state;
-	};
+	uint32_t hw_clk_id;
 } __packed;
 
 struct prm_cmd_request_rsc {
@@ -164,7 +158,6 @@ static int q6prm_audioreach_set_hw_core_req(struct device *dev, uint32_t hw_bloc
 	struct prm_cmd_request_hw_core *req;
 	gpr_device_t *gdev = prm->gdev;
 	uint32_t opcode, rsp_opcode;
-	bool lpr_req = (hw_block_id == Q6PRM_HW_LPR_VOTE);
 	struct gpr_pkt *pkt;
 	int rc;
 
@@ -187,13 +180,10 @@ static int q6prm_audioreach_set_hw_core_req(struct device *dev, uint32_t hw_bloc
 
 	param_data->module_instance_id = GPR_PRM_MODULE_IID;
 	param_data->error_code = 0;
-	param_data->param_id = lpr_req ? PARAM_ID_RSC_CPU_LPR : PARAM_ID_RSC_HW_CORE;
+	param_data->param_id = PARAM_ID_RSC_HW_CORE;
 	param_data->param_size = sizeof(*req) - APM_MODULE_PARAM_DATA_SIZE;
 
-	if (lpr_req)
-		req->lpr_state = LPR_CPU_SS_SLEEP_DISABLE;
-	else
-		req->hw_clk_id = hw_block_id;
+	req->hw_clk_id = hw_block_id;
 
 	rc = q6prm_audioreach_send_cmd_sync(prm, pkt, rsp_opcode);
 
